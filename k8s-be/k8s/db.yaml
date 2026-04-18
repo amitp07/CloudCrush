@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      # FIX 1: Fix permissions before Postgres starts
+      initContainers:
+        - name: init-chown-postgres
+          image: busybox
+          command: ["sh", "-c", "chown -R 999:999 /var/lib/postgresql/data"]
+          volumeMounts:
+            - name: postgres-db
+              mountPath: /var/lib/postgresql/data
+      containers:
+        - name: postgres-container
+          image: postgres:alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_PASSWORD
+              value: postgres
+            # FIX 2: Force Postgres to use a clean subfolder on the disk
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-db
+              mountPath: /var/lib/postgresql/data
+              # We use the root mount here because PGDATA handles the subfolder
+      volumes:
+        - name: postgres-db
+          persistentVolumeClaim:
+            claimName: postgres-pvc
