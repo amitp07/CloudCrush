@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: cloudcrush-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudcrush-api
+  template:
+    metadata:
+      labels:
+        app: cloudcrush-api
+    spec:
+      containers:
+        - name: api
+          image: cloudcrush-be:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          command: ['./cloudcrush-api']
+          env:
+           - name: NATS_DSN
+             value: nats-svc:4222 
+           - name: POSTGRES_DSN
+             value: postgres://postgres:postgres@postgres-service:5432/k8s-db?sslmode=disable
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudcrush-api-svc
+spec:
+  selector:
+    app: cloudcrush-api
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30080
+      protocol: TCP
