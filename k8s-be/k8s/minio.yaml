@@ -21,7 +21,7 @@ spec:
             - /data
             - --console-address
             - ":9001"
-          envs:
+          env:
             - name: MINIO_ROOT_USER
               value: minioadmin
             - name: MINIO_ROOT_PASSWORD

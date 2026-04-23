@@ -2,10 +2,12 @@ package broker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/amitp07/CloudCrush/k8s-be/internal/dto"
 	"github.com/nats-io/nats.go"
 )
 
@@ -67,8 +69,9 @@ func NewNatsBroker(nc *nats.Conn) (*NatsBroker, error) {
 	}, nil
 }
 
-func (nb *NatsBroker) PublishImageJob(ctx context.Context, jobId string) error {
-	_, err := nb.Js.Publish("IMAGE.created", []byte(jobId))
+func (nb *NatsBroker) PublishImageJob(ctx context.Context, imageJob dto.ImageJob) error {
+	imageBytes, _ := json.Marshal(imageJob)
+	_, err := nb.Js.Publish("IMAGE.created", []byte(imageBytes))
 
 	return err
 }

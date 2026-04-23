@@ -5,27 +5,31 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
+	"github.com/amitp07/CloudCrush/k8s-be/internal/dto"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/store"
 )
 
 type ImageEventPublisher interface {
-	PublishImageJob(context.Context, string) error
+	PublishImageJob(context.Context, dto.ImageJob) error
 }
 
-type ImageCreator interface {
+type ImageService interface {
 	CreateImage(store.ImageJobsData) string
 }
 
-type PGStore struct {
-	Store  ImageCreator
-	Broker ImageEventPublisher
+type ObjectStorage interface {
+	UploadFile(ctx context.Context, key string, file []byte)
 }
 
-func (pgStore PGStore) CreateImage(w http.ResponseWriter, r *http.Request) {
+type ImageHandler struct {
+	DB      ImageService
+	Broker  ImageEventPublisher
+	Storage ObjectStorage
+}
+
+func (h ImageHandler) CreateImage(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Request hit")
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
@@ -43,31 +47,26 @@ func (pgStore PGStore) CreateImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	filename := fmt.Sprintf("%d-%s", time.Now().UnixNano(), header.Filename)
-	savePath := filepath.Join("./upload", filename)
+	key := fmt.Sprintf("raw/%d-%s", time.Now().UnixNano(), header.Filename)
 
-	dst, err := os.Create(savePath)
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Println(err.Error())
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
-		return
+		panic(err)
 	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, file); err != nil {
-		fmt.Println(err.Error())
-		http.Error(w, "Failed to write file", http.StatusInternalServerError)
-		return
-	}
+	// store in s3
+	h.Storage.UploadFile(r.Context(), key, fileBytes)
 
 	dbInput := store.ImageJobsData{
 		Filename:     header.Filename,
-		OriginalPath: savePath,
+		OriginalPath: key,
 	}
 
-	id := pgStore.Store.CreateImage(dbInput)
+	id := h.DB.CreateImage(dbInput)
 
-	pgStore.Broker.PublishImageJob(r.Context(), string(id))
+	h.Broker.PublishImageJob(r.Context(), dto.ImageJob{
+		Id:  string(id),
+		Key: key,
+	})
 
 	w.Write([]byte(fmt.Sprintf("Created id %v\n", id)))
 }

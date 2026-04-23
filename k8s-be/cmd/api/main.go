@@ -10,6 +10,7 @@ import (
 	"github.com/amitp07/CloudCrush/k8s-be/internal/config"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/handlers"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/routes"
+	"github.com/amitp07/CloudCrush/k8s-be/internal/storage"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -53,9 +54,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	store := store.NewStore(db)
-	imageHandler := handlers.PGStore{Store: store, Broker: nb}
+
+	storage.NewS3Client(ctx)
+	// init image handler
+	imageHandler := handlers.ImageHandler{DB: store, Broker: nb}
 	//init router
 	routesConfig := routes.Config{
 		Image: imageHandler,
