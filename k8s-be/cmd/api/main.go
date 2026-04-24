@@ -56,9 +56,9 @@ func main() {
 	}
 	store := store.NewStore(db)
 
-	storage.NewS3Client(ctx)
+	s3Client := storage.NewS3Client(ctx)
 	// init image handler
-	imageHandler := handlers.ImageHandler{DB: store, Broker: nb}
+	imageHandler := handlers.ImageHandler{DB: store, Broker: nb, Storage: s3Client}
 	//init router
 	routesConfig := routes.Config{
 		Image: imageHandler,

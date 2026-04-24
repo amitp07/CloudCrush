@@ -1,24 +1,21 @@
 apiVersion: apps/v1
-kind: Deployment 
+kind: Deployment
 metadata:
-  name: cloudcrush-api
+  name: cloudcrush-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cloudcrush-api
+      worker: cloudcrush
   template:
-    metadata:
-      labels:
-        app: cloudcrush-api
-    spec:
+     metadata:
+      labels:  
+        worker: cloudcrush
+     spec:
       containers:
-        - name: api
+        - name: cloudcrush-worker
           image: cloudcrush:v1.0
-          imagePullPolicy: Never
-          ports:
-            - containerPort: 3000
-          command: ['./cloudcrush-api']
+          command: ["./cloudcrush-worker"]
           env:
            - name: NATS_DSN
              value: nats-svc:4222 
@@ -35,18 +32,5 @@ spec:
            - name: AWS_REGION
              value: us-east-1
 
----
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: cloudcrush-api-svc
-spec:
-  selector:
-    app: cloudcrush-api
-  type: NodePort
-  ports:
-    - port: 80
-      targetPort: 3000
-      nodePort: 30080
-      protocol: TCP
+        

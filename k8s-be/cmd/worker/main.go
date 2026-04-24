@@ -2,19 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/amitp07/CloudCrush/k8s-be/internal/broker"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/config"
+	"github.com/amitp07/CloudCrush/k8s-be/internal/dto"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/processor"
+	"github.com/amitp07/CloudCrush/k8s-be/internal/storage"
 	"github.com/amitp07/CloudCrush/k8s-be/internal/store"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -37,7 +39,9 @@ func main() {
 		panic(err)
 	}
 
-	pgStore := store.NewStore(pg)
+	store := store.NewStore(pg)
+
+	s3Client := storage.NewS3Client(context.Background())
 
 	// nats connection
 	nc, err := broker.ConnectNats(cfg.NatsURL)
@@ -66,7 +70,6 @@ func main() {
 			return
 		default:
 			msgs, err := sub.Fetch(1, nats.Context(ctx))
-			fmt.Printf("msg %v\n", msgs)
 			if errors.Is(err, nats.ErrTimeout) || errors.Is(err, context.DeadlineExceeded) {
 				continue
 			}
@@ -77,19 +80,29 @@ func main() {
 			}
 
 			for _, msg := range msgs {
-				jobId := string(msg.Data)
+				var job dto.ImageJob
+				if err := json.Unmarshal(msg.Data, &job); err != nil {
+					fmt.Printf("Rejected bad message: %v, Raw data %s\n", err, string(msg.Data))
+					msg.Term()
+					continue
+				}
+
+				jobId := job.Id
 				fmt.Printf("Processing Job %s\n", jobId)
 
-				job := pgStore.GetJobById(jobId)
+				file := s3Client.DownloadFile(context.Background(), job.Key)
 
-				ext := filepath.Ext(job.OriginalPath)
-				outputPath := fmt.Sprintf("%s-compressed%s", strings.TrimSuffix(job.OriginalPath, ext), ext)
-				if err := processor.CompressImage(job.OriginalPath, outputPath); err != nil {
-					msg.Nak()
+				outputPath := fmt.Sprintf("compressed%s", strings.TrimPrefix(job.Key, "raw"))
+
+				imageBytes, err := processor.CompressImage(file)
+				if err != nil {
+					msg.Ack()
 					panic(err)
 				}
 
-				pgStore.UpdateJobStatus("complete", outputPath, jobId)
+				s3Client.UploadFile(context.Background(), outputPath, imageBytes)
+
+				store.UpdateJobStatus("complete", outputPath, jobId)
 
 				msg.Ack()
 

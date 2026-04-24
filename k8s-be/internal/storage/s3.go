@@ -28,6 +28,7 @@ func NewS3Client(ctx context.Context) *S3Client {
 	cfg, err := config.LoadDefaultConfig(
 		ctx,
 		config.WithRegion(region),
+		config.WithBaseEndpoint(endpoint),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
 	)
 
@@ -50,9 +51,9 @@ func NewS3Client(ctx context.Context) *S3Client {
 }
 
 // upload file to s3
-func (s *S3Client) UploadFile(ctx context.Context, bucket string, key string, file []byte) {
+func (s *S3Client) UploadFile(ctx context.Context, key string, file []byte) {
 	_, err := s.Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(s.Bucket),
 		Key:    aws.String(key),
 		Body:   bytes.NewReader(file),
 	})
@@ -63,9 +64,9 @@ func (s *S3Client) UploadFile(ctx context.Context, bucket string, key string, fi
 }
 
 // download s3 file
-func (s *S3Client) DownloadFile(ctx context.Context, bucket string, key string) []byte {
+func (s *S3Client) DownloadFile(ctx context.Context, key string) []byte {
 	file, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(s.Bucket),
 		Key:    aws.String(key),
 	})
 
