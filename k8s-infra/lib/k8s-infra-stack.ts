@@ -1,3 +1,4 @@
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import {Bucket} from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib/core';
@@ -28,6 +29,17 @@ export class K8SInfraStack extends cdk.Stack {
       versioned: true,
       autoDeleteObjects: true,
     }) 
+
+    const paramPrefix = "cloudcrush/sandbox/";
+    new StringParameter(this, "BucketNameParam", {
+      parameterName: `${paramPrefix}s3/bucketName`,
+      stringValue: bucket.bucketName
+    }) 
+
+    new StringParameter(this, "VpcIdParam", {
+      parameterName: `${paramPrefix}vpc/id`,
+      stringValue: vpc.vpcId
+    })
 
   }
 }
