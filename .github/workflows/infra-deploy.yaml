@@ -23,7 +23,7 @@ jobs:
       - name: Setup Nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
       # install node deps using clean install
       - name: Install CDK dependencies
         run: |
@@ -38,7 +38,7 @@ jobs:
       # start cdk configuration, synth diff and deploy
       - name: CDK Synth
         working-directory: k8s-infra
-        run: npx cdk synth 
+        run: ./node_modules/.bin/cdk synth 
       - name: CDK diff
         working-directory: k8s-infra
         run: npx cdk diff --all
