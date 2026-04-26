@@ -37,8 +37,9 @@ jobs:
           aws-region: ${{vars.AWS_REGION}}
       # start cdk configuration, synth diff and deploy
       - name: CDK Synth
-        working-directory: k8s-infra
-        run: ./node_modules/.bin/cdk synth 
+        run: |
+          cd k8s-infra
+          npx cdk synth 
       - name: CDK diff
         working-directory: k8s-infra
         run: npx cdk diff --all
