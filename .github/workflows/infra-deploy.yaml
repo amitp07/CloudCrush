@@ -29,17 +29,16 @@ jobs:
         run: |
           cd k8s-infra
           npm ci 
+      # start cdk configuration, synth diff and deploy
+      - name: CDK Synth
+        working-directory: k8s-infra
+        run: ./node_modules/.bin/cdk synth --app "node_modules/.bin/ts-node --prefer-ts-exts bin/k8s-infra.ts"
       # configure aws creds using oidc
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{secrets.AWS_GITHUB_OIDC_ROLE}} 
           aws-region: ${{vars.AWS_REGION}}
-      # start cdk configuration, synth diff and deploy
-      - name: CDK Synth
-        run: |
-          cd k8s-infra
-          npx cdk synth 
       - name: CDK diff
         working-directory: k8s-infra
         run: npx cdk diff --all
