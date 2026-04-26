@@ -1,0 +1,38 @@
+name: CloudCrush Infrastructure
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - k8s-infra/**
+  workflow_dispatch:
+
+jobs:
+  deploy_infra:
+    runs-on: ubuntu-latest
+    environment: sandbox
+    
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install CDK dependencies
+        run: |
+          cd k8s-infra
+          npm install
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.AWS_GITHUB_OIDC_ROLE}} 
+          aws-region: ${{vars.AWS_REGION}}
+      - name: CDK Deploy 
+        run: |
+          cd k8s-infra
+          npx cdk deploy --require-approval never
