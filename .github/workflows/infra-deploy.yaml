@@ -29,6 +29,27 @@ jobs:
         run: |
           cd k8s-infra
           npm ci 
+      - name: Debug Environment and Paths
+        working-directory: k8s-infra
+        run: |
+          echo "=== Current Working Directory ==="
+          pwd
+          
+          echo "=== List root directory ==="
+          ls -F ..
+          
+          echo "=== List k8s-infra directory ==="
+          ls -F
+          
+          echo "=== List bin directory ==="
+          ls -F bin/
+          
+          echo "=== Check if ts-node exists ==="
+          ls -l ./node_modules/.bin/ts-node || echo "ts-node NOT FOUND"
+          
+          echo "=== Check node and npm versions ==="
+          node -v
+          npm -v
       # start cdk configuration, synth diff and deploy
       - name: CDK Synth
         working-directory: k8s-infra
