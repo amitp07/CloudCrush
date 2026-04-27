@@ -30,7 +30,7 @@ export class K8SInfraStack extends cdk.Stack {
       autoDeleteObjects: true,
     }) 
 
-    const paramPrefix = "cloudcrush/sandbox/";
+    const paramPrefix = "/cloudcrush/sandbox/";
     new StringParameter(this, "BucketNameParam", {
       parameterName: `${paramPrefix}s3/bucketName`,
       stringValue: bucket.bucketName
