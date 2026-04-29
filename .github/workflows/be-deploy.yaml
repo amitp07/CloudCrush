@@ -1,0 +1,34 @@
+name: CloudCrush Backend
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - k8s-be/**
+  workflow_dispatch:
+
+jobs:
+  deploy_go_backend:
+    runs-on: ubuntu-latest 
+    environment: sandbox
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3 
+        with:
+          registry: ghcr.io
+          username: ${{github.actor}}
+          passwork: ${{secrets.GITHUB_TOKEN}}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./k8s-be
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/cloudcrush-api:latest
+            ghcr.io/${{ github.repository }}/cloudcrush-api:${{ github.sha }}
