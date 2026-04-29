@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Repo name to lower case
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       - name: Login to GHCR
         uses: docker/login-action@v3 
         with:
@@ -30,5 +33,5 @@ jobs:
           context: ./k8s-be
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/cloudcrush-api:latest
-            ghcr.io/${{ github.repository }}/cloudcrush-api:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LC }}/cloudcrush-api:latest
+            ghcr.io/${{ env.REPO_LC }}/cloudcrush-api:${{ github.sha }}
