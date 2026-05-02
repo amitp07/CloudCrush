@@ -4,7 +4,7 @@ import {Bucket} from 'aws-cdk-lib/aws-s3';
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
 import { aws_ec2, aws_eks, aws_iam } from 'aws-cdk-lib';
-import {KubectlV35Layer} from '@aws-cdk/lambda-layer-kubectl-v35';
+import {KubectlV31Layer} from '@aws-cdk/lambda-layer-kubectl-v31';
 
 export class K8SInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -44,8 +44,8 @@ export class K8SInfraStack extends cdk.Stack {
     })
 
     const cluster = new aws_eks.Cluster(this, "cloudcrush-cluster", {
-      version: aws_eks.KubernetesVersion.V1_35,
-      kubectlLayer: new KubectlV35Layer(this, "kubectl"),
+      version: aws_eks.KubernetesVersion.V1_31,
+      kubectlLayer: new KubectlV31Layer(this, "kubectl"),
       defaultCapacity: 0,
       clusterName: "cloudcrush-lab",
       endpointAccess: aws_eks.EndpointAccess.PUBLIC
