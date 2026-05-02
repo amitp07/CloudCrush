@@ -41,7 +41,7 @@ func main() {
 
 	store := store.NewStore(pg)
 
-	s3Client := storage.NewS3Client(context.Background())
+	s3Client := storage.NewS3Client(context.Background(), &cfg)
 
 	// nats connection
 	nc, err := broker.ConnectNats(cfg.NatsURL)

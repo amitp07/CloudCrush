@@ -6,9 +6,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/amitp07/CloudCrush/k8s-be/internal/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
+	awsCfg "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -18,18 +18,14 @@ type S3Client struct {
 }
 
 // create new S3 client
-func NewS3Client(ctx context.Context) *S3Client {
+func NewS3Client(ctx context.Context, appCfg *config.Config) *S3Client {
 	bucket := os.Getenv("AWS_IMAGE_JOB_BUCKET")
 	endpoint := os.Getenv("AWS_ENDPOINT")
 	region := os.Getenv("AWS_REGION")
-	accessKey := os.Getenv("AWS_ACCESS_KEY_ID")
-	secretKey := os.Getenv("AWS_SECRET_ACCESS_KEY")
 
-	cfg, err := config.LoadDefaultConfig(
+	cfg, err := awsCfg.LoadDefaultConfig(
 		ctx,
-		config.WithRegion(region),
-		config.WithBaseEndpoint(endpoint),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		awsCfg.WithRegion(region),
 	)
 
 	if err != nil {

@@ -12,26 +12,18 @@ spec:
       labels:
         app: cloudcrush-api
     spec:
+      imagePullSecrets:
+        - name: ghcr-auth
       containers:
         - name: api
-          image: cloudcrush:v1.0
-          imagePullPolicy: Never
+          image: ghcr.io/amitp07/cloudcrush/cloudcrush-api:latest 
+          imagePullPolicy: Always 
           ports:
             - containerPort: 3000
           command: ['./cloudcrush-api']
           env:
-           - name: NATS_DSN
-             value: nats-svc:4222 
-           - name: POSTGRES_DSN
-             value: postgres://postgres:postgres@postgres-service:5432/k8s-db?sslmode=disable
-           - name: AWS_IMAGE_JOB_BUCKET
-             value: cloudcrush
-           - name: AWS_ACCESS_KEY_ID
-             value: minioadmin
-           - name: AWS_SECRET_ACCESS_KEY
-             value: minioadmin
-           - name: AWS_ENDPOINT
-             value: http://minio-svc:9000 
+           - name: ENVIRONMENT 
+             value: sandbox 
            - name: AWS_REGION
              value: us-east-1
 
