@@ -75,6 +75,7 @@ export class K8SInfraStack extends cdk.Stack {
       minSize: 1,
       maxSize: 2,
       subnets: { subnetType: aws_ec2.SubnetType.PUBLIC },
+      amiType: aws_eks.NodegroupAmiType.AL2023_X86_64_STANDARD
     });
 
     const ghPat = process.env.GH_PACKAGE_READ_PAT;
