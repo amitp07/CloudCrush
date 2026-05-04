@@ -54,4 +54,22 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 512Mi
+  selector:
+    matchLabels:
+      app: nats
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nats-pv
+  labels:
+    app: nats
+spec:
+  capacity:
+    storage: 512Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data-nats"
