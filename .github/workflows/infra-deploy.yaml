@@ -45,3 +45,7 @@ jobs:
       - name: CDK Deploy 
         working-directory: k8s-infra
         run: npx cdk deploy --all --require-approval never
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          GH_PACKAGE_READ_PAT: ${{ secrets.GH_PACKAGE_READ_PAT }}
+          GH_USERNAME: ${{ secrets.GH_USERNAME }}
