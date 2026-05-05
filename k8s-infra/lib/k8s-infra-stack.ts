@@ -46,7 +46,7 @@ export class K8SInfraStack extends cdk.Stack {
 
     const cluster = new aws_eks.Cluster(this, "cloudcrush-cluster", {
       vpc: vpc,
-      vpcSubnets: [{subnetType: aws_ec2.SubnetType.PUBLIC}],
+      vpcSubnets: [{ subnetType: aws_ec2.SubnetType.PUBLIC }],
       version: aws_eks.KubernetesVersion.V1_34,
       kubectlLayer: new KubectlV34Layer(this, "kubectl"),
       defaultCapacity: 0,
@@ -54,6 +54,11 @@ export class K8SInfraStack extends cdk.Stack {
       endpointAccess: aws_eks.EndpointAccess.PUBLIC,
       authenticationMode: aws_eks.AuthenticationMode.API_AND_CONFIG_MAP,
       bootstrapClusterCreatorAdminPermissions: true
+    })
+
+    new aws_eks.CfnAddon(this, "ebs-csi-addon", {
+      addonName: "aws-ebs-csi-driver",
+      clusterName: cluster.clusterName
     })
 
     const awsAccountId = process.env.AWS_ACCOUNT_ID;
@@ -112,8 +117,10 @@ export class K8SInfraStack extends cdk.Stack {
       })
     })
 
+
     bucket.grantReadWrite(podRole)
     podRole.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'));
+    podRole.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'))
 
     cluster.addManifest('cloudcrush-sa', {
       apiVersion: 'v1',
@@ -123,6 +130,16 @@ export class K8SInfraStack extends cdk.Stack {
         namespace: 'default',
         annotations: { 'eks.amazonaws.com/role-arn': podRole.roleArn }
       }
+    });
+
+    new aws_eks.AccessEntry(this, 'LocalAdminAccess', {
+      cluster: cluster,
+      principal: `arn:aws:iam::${awsAccountId}:user/admin_user`, // Replace with your IAM User ARN
+      accessPolicies: [
+        aws_eks.AccessPolicy.fromAccessPolicyName('AmazonEKSClusterAdminPolicy', {
+          accessScopeType: aws_eks.AccessScopeType.CLUSTER,
+        }),
+      ],
     });
   }
 }
