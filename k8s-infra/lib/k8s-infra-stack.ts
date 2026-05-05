@@ -56,10 +56,6 @@ export class K8SInfraStack extends cdk.Stack {
       bootstrapClusterCreatorAdminPermissions: true
     })
 
-    new aws_eks.CfnAddon(this, "ebs-csi-addon", {
-      addonName: "aws-ebs-csi-driver",
-      clusterName: cluster.clusterName
-    })
 
     const awsAccountId = process.env.AWS_ACCOUNT_ID;
     cluster.grantAccess("AdminAccess", `arn:aws:iam::${awsAccountId}:root`, [
