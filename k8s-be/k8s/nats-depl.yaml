@@ -15,7 +15,7 @@ spec:
       containers:
         - name: nats
           image: nats:alpine
-          args: ["-js"]
+          args: ["-js", "-sd", "/data/nats-storage"]
           ports:
             - containerPort: 4222
             - containerPort: 8222
@@ -50,26 +50,27 @@ kind: PersistentVolumeClaim
 metadata:
   name: nats-pvc
 spec:
+  storageClassName: gp3
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 512Mi
-  selector:
-    matchLabels:
-      app: nats
+  # selector:
+  #   matchLabels:
+  #     app: nats
 
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: nats-pv
-  labels:
-    app: nats
-spec:
-  capacity:
-    storage: 512Mi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data-nats"
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: nats-pv
+#   labels:
+#     app: nats
+# spec:
+#   capacity:
+#     storage: 512Mi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "/mnt/data-nats"

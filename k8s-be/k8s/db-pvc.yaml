@@ -29,6 +29,5 @@ spec:
     storage: 512Mi
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain 
-  hostPath:
-    path: /data/postgres-storage
+  persistentVolumeReclaimPolicy: Delete
+  awsElasticBlockStore:

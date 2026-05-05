@@ -122,6 +122,27 @@ export class K8SInfraStack extends cdk.Stack {
     podRole.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'));
     podRole.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3FullAccess'))
 
+    // Create the IAM Role for the EBS CSI Driver
+    const ebsCsiRole = new aws_iam.Role(this, 'EbsCsiRole', {
+      assumedBy: new aws_iam.WebIdentityPrincipal(cluster.openIdConnectProvider.openIdConnectProviderArn, {
+        StringEquals: new cdk.CfnJson(this, 'EbsCsiCondition', {
+          value: {
+            [`${cluster.openIdConnectProvider.openIdConnectProviderIssuer}:sub`]: 'system:serviceaccount:kube-system:ebs-csi-controller-sa',
+          },
+        }),
+      }),
+    });
+
+    // Attach the AWS-managed policy for EBS
+    ebsCsiRole.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonEBSCSIDriverPolicy'));
+
+    // Update the Addon to use this Role
+    new aws_eks.CfnAddon(this, 'ebs-csi-addon', {
+      addonName: 'aws-ebs-csi-driver',
+      clusterName: cluster.clusterName,
+      serviceAccountRoleArn: ebsCsiRole.roleArn, // Link the role here
+    });
+
     cluster.addManifest('cloudcrush-sa', {
       apiVersion: 'v1',
       kind: 'ServiceAccount',
