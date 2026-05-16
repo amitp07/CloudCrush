@@ -1,12 +1,7 @@
 package config
 
 import (
-	"context"
 	"os"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 )
 
 type Config struct {
@@ -18,57 +13,44 @@ type Config struct {
 }
 
 const (
-	NATS_URL       = "/cloudcrush/sandbox/nats/url"
-	POSTGRES_URL   = "/cloudcrush/sandbox/postgres/url"
-	S3_BUCKET_NAME = "/cloudcrush/sandbox/s3/bucketName"
-	AWS_REGION     = "ap-south-1"
+	DefaultNatsURL  = "nats://localhost:4222"
+	DefaultPgURL    = "postgres://postgres:postgres@localhost:5432/k8s-db?sslmode=disable"
+	DefaultBucket   = "cloudcrush-bucket"
+	DefaultRegion   = "us-east-1"
+	DefaultEndpoint = "http://minio-service.default.svc.cluster.local:9000"
 )
 
 func Load() Config {
 	natsUrl := os.Getenv("NATS_DSN")
-	pgUrl := os.Getenv("POSTGRES_DSN")
-	bucket := os.Getenv("AWS_IMAGE_JOB_BUCKET")
-	region := os.Getenv("AWS_REGION")
-
-	if region == "" {
-		region = AWS_REGION
+	if natsUrl == "" {
+		natsUrl = DefaultNatsURL
 	}
 
-	if natsUrl == "" && pgUrl == "" {
+	pgUrl := os.Getenv("POSTGRES_DSN")
+	if pgUrl == "" {
+		pgUrl = DefaultPgURL
+	}
 
-		ctx := context.Background()
+	bucket := os.Getenv("AWS_IMAGE_JOB_BUCKET")
+	if bucket == "" {
+		bucket = DefaultBucket
+	}
 
-		awsConfig, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	region := os.Getenv("AWS_REGION")
+	if region == "" {
+		region = DefaultRegion
+	}
 
-		if err != nil {
-			panic(err)
-		}
-
-		client := ssm.NewFromConfig(awsConfig)
-
-		result, err := client.GetParametersByPath(ctx, &ssm.GetParametersByPathInput{
-			Path:           aws.String("/cloudcrush"),
-			Recursive:      aws.Bool(true),
-			WithDecryption: aws.Bool(true),
-		})
-
-		if err != nil {
-			panic(err)
-		}
-
-		m := map[string]string{}
-		for _, param := range result.Parameters {
-			m[*param.Name] = *param.Value
-		}
-
-		natsUrl = m[NATS_URL]
-		pgUrl = m[POSTGRES_URL]
-		bucket = m[S3_BUCKET_NAME]
+	s3Endpoint := os.Getenv("AWS_S3_ENDPOINT")
+	if s3Endpoint == "" {
+		s3Endpoint = DefaultEndpoint
 	}
 
 	return Config{
-		NatsURL:     natsUrl,
-		PostgresURL: pgUrl,
-		AwsS3Bucket: bucket,
+		NatsURL:       natsUrl,
+		PostgresURL:   pgUrl,
+		AwsS3Bucket:   bucket,
+		AwsS3Endpoint: s3Endpoint,
+		AwsRegion:     region,
 	}
 }

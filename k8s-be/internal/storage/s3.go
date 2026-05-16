@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"os"
 
 	"github.com/amitp07/CloudCrush/k8s-be/internal/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,13 +18,10 @@ type S3Client struct {
 
 // create new S3 client
 func NewS3Client(ctx context.Context, appCfg *config.Config) *S3Client {
-	bucket := os.Getenv("AWS_IMAGE_JOB_BUCKET")
-	endpoint := os.Getenv("AWS_ENDPOINT")
-	region := os.Getenv("AWS_REGION")
 
 	cfg, err := awsCfg.LoadDefaultConfig(
 		ctx,
-		awsCfg.WithRegion(region),
+		awsCfg.WithRegion(appCfg.AwsRegion),
 	)
 
 	if err != nil {
@@ -33,15 +29,15 @@ func NewS3Client(ctx context.Context, appCfg *config.Config) *S3Client {
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		if endpoint != "" {
-			o.BaseEndpoint = aws.String(endpoint)
+		if appCfg.AwsS3Endpoint != "" {
+			o.BaseEndpoint = aws.String(appCfg.AwsS3Endpoint)
 			o.UsePathStyle = true
 		}
 	})
 
 	return &S3Client{
 		Client: client,
-		Bucket: bucket,
+		Bucket: appCfg.AwsS3Bucket,
 	}
 
 }

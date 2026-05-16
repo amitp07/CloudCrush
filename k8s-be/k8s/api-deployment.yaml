@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment 
+kind: Deployment
 metadata:
   name: cloudcrush-api
 spec:
@@ -16,19 +16,39 @@ spec:
         - name: ghcr-auth
       containers:
         - name: api
-          image: ghcr.io/amitp07/cloudcrush/cloudcrush-api:latest 
-          imagePullPolicy: Always 
+          image: ghcr.io/amitp07/cloudcrush/cloudcrush-api:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
-          command: ['./cloudcrush-api']
+          command: ["./cloudcrush-api"]
           env:
-           - name: ENVIRONMENT 
-             value: sandbox 
-           - name: AWS_REGION
-             value: us-east-1
+            - name: ENVIRONMENT
+              value: production
+            - name: AWS_REGION
+              value: ap-south-1
+            - name: NATS_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: nats-dsn 
+            - name: POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets 
+                  key: postgres-dsn
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: aws-access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: aws-secret-key
+                  
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -36,9 +56,8 @@ metadata:
 spec:
   selector:
     app: cloudcrush-api
-  type: NodePort
+  type: ClusterIP 
   ports:
     - port: 80
       targetPort: 3000
-      nodePort: 30080
       protocol: TCP

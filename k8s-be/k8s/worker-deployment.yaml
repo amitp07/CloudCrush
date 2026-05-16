@@ -8,29 +8,38 @@ spec:
     matchLabels:
       worker: cloudcrush
   template:
-     metadata:
+    metadata:
       labels:  
         worker: cloudcrush
-     spec:
+    spec:
+      imagePullSecrets:
+        - name: ghcr-auth 
       containers:
         - name: cloudcrush-worker
           image: ghcr.io/amitp07/cloudcrush/cloudcrush-api:latest
           command: ["./cloudcrush-worker"]
+          imagePullPolicy: Always
           env:
-           - name: NATS_DSN
-             value: nats-svc:4222 
-           - name: POSTGRES_DSN
-             value: postgres://postgres:postgres@postgres-service:5432/k8s-db?sslmode=disable
-           - name: AWS_IMAGE_JOB_BUCKET
-             value: cloudcrush
-           - name: AWS_ACCESS_KEY_ID
-             value: minioadmin
-           - name: AWS_SECRET_ACCESS_KEY
-             value: minioadmin
-           - name: AWS_ENDPOINT
-             value: http://minio-svc:9000 
-           - name: AWS_REGION
-             value: us-east-1
-
-
-        
+            - name: NATS_DSN
+              value: "nats-svc:4222" 
+            - name: AWS_IMAGE_JOB_BUCKET
+              value: "cloudcrush"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: AWS_S3_ENDPOINT
+              value: "http://minio-svc.default.svc.cluster.local:9000" 
+            - name: POSTGRES_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: postgres-dsn
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: aws-access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cloudcrush-secrets
+                  key: aws-secret-key

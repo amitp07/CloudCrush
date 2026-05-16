@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: nats
-          image: nats:alpine
-          args: ["-js"]
+          image: nats:2.10-alpine
+          args: ["-js", "-sd", "/data/nats-storage"]
           ports:
             - containerPort: 4222
             - containerPort: 8222
@@ -28,12 +28,27 @@ spec:
             claimName: nats-pvc
 
 ---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nats-pvc
+spec:
+  storageClassName: local-path 
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi 
+
+---
+
 apiVersion: v1
 kind: Service
 metadata:
   name: nats-svc
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: nats
   ports:
@@ -43,33 +58,3 @@ spec:
     - name: mgmt
       port: 8222
       targetPort: 8222
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: nats-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 512Mi
-  selector:
-    matchLabels:
-      app: nats
-
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: nats-pv
-  labels:
-    app: nats
-spec:
-  capacity:
-    storage: 512Mi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data-nats"
